@@ -1,0 +1,171 @@
+1.python3 不存在urllib这个库，统一为urllib
+包含4个模块：
+     1.urllib.request,2urllib.error,3.urllib.parse,4urllib.robotparser
+一：urllib.request
+1.urlopen
+    给链接传递一些参数用urllib.request.urlopen(url,data=None,[timeout,]*,context=None)
+url 打开URL，可以接受一个字符串的URL，或者一个Request对象；
+data 该参数是可选的。如果要添加该参数，并且如果它是字节流编码格式的内容，即bytes类型，则需要通过bytes()方法转化。另外，如果传递了这个参数，则它的请求方式就不再是GET方式，而是POST方式
+timeout 该参数用于设置超时时间，单位为秒，意思就是如果请求超出了设置的这个时间，还没有得到响应，就会抛出异常。如果不指定该参数，就会使用全局默认时间。它支持HTTP、HTTPS、FTP请求。
+2.响应
+from urllib import request
+response = request.urlopen('http://www.baidu.com/')
+print(type(response))
+print(response.status)#状态码
+print(response.getheaders())#响应头
+print(response.getheader('Bdpagetype'))
+
+3.Request
+我们知道利用urlopen()方法可以实现最基本请求的发起，但这几个简单的参数并不足以构建一个完整的请求。如果请求中需要加入Headers等信息，就可以利用更强大的Request类来构建。详情点击
+urllib.request.Request(url, data=None, headers={}, origin_req_host=None, unverifiable=False, method=None)
+第一个参数url用于请求URL，这是必传参数，其他都是可选参数。
+第二个参数data如果要传，必须传bytes（字节流）类型的。如果它是字典，可以先用urllib.parse模块里的urlencode()编码。
+第三个参数headers是一个字典，它就是请求头，我们可以在构造请求时通过headers参数直接构造，也可以通过调用请求实例的add_header()方法添加。
+第四个参数origin_req_host指的是请求方的host名称或者IP地址。
+第五个参数unverifiable表示这个请求是否是无法验证的，默认是False，意思就是说用户没有足够权限来选择接收这个请求的结果。例如，我们请求一个HTML文档中的图片，但是我们没有自动抓取图像的权限，这时unverifiable的值就是True`。
+第六个参数method是一个字符串，用来指示请求使用的方法，比如GET、POST和PUT等。
+用法：
+from urllib import request, parse
+ 
+url = 'http://httpbin.org/post'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
+    'Host': 'httpbin.org/post'
+}
+data = {
+    'name': 'Germey'
+}
+data = bytes(parse.urlencode(data), encoding='utf8')
+req = request.Request(url=url, data=data, headers=headers,method='POST')
+response = request.urlopen(req)
+print(response.read().decode('utf-8'))
+4.handler 
+对于一些更高级的操作（比如Cookies处理、代理设置等），就需要更强大的工具Handler登场了。简而言之，我们可以把它理解为各种处理器，有专门处理登录验证的，有处理Cookies的，有处理代理设置的，相当于额外的处理工具。利用它们，我们几乎可以做到HTTP请求中所有的事情。
+对于一些更高级的操作（比如Cookies处理、代理设置等），就需要更强大的工具Handler登场了。简而言之，我们可以把它理解为各种处理器，有专门处理登录验证的，有处理Cookies的，有处理代理设置的，相当于额外的处理工具。利用它们，我们几乎可以做到HTTP请求中所有的事情
+4.1代理
+针对urllib.request模块可以这样做：
+from urllib.error import URLError
+from urllib.request import ProxyHandler, build_opener
+ 
+proxy_handler = ProxyHandler({
+    'http':'http://221.228.17.172:8181'
+})
+opener = build_opener(proxy_handler)
+try:
+    response = opener.open('http://httpbin.org/get')
+    print(response.read().decode('utf-8'))
+except URLError as e:
+    print(e.reason)
+输出：
+{
+  "args": {}, 
+  "headers": {
+    "Accept-Encoding": "identity", 
+    "Connection": "close", 
+    "Host": "httpbin.org", 
+    "User-Agent": "Python-urllib/3.6"
+  }, 
+  "origin": "221.228.17.172", 
+  "url": "http://httpbin.org/get"
+}
+4.2.Cookies
+把cookies获取下来方法一：
+from http import cookiejar
+from urllib import request
+cookies = cookiejar.CookieJar()
+handler = request.HTTPCookieProcessor(cookies)
+opener = request.build_opener(handler)
+response = opener.open('http://www.baidu.com')
+for item in cookies:
+    print(item.name + '=' + item.value)
+方法二：
+from http import cookiejar
+from urllib import request
+filename = 'cookies.txt'
+cookie = cookiejar.MozillaCookieJar(filename)
+handler = request.HTTPCookieProcessor(cookie)
+opener = request.build_opener(handler)
+response = opener.open('http://www.baidu.com')
+cookie.save(ignore_discard = True,ignore_expires=True)
+ 
+上面用到的是MozillaCookieJar，将Cookies保存成Mozilla型浏览器的Cookies格式；下面的LWPCookieJar，可以保存成libwww-perl(LWP)格式的Cookies文件。
+上面用到的是MozillaCookieJar，将Cookies保存成Mozilla型浏览器的Cookies格式；下面的LWPCookieJar，可以保存成libwww-perl(LWP)格式的Cookies文件。
+
+读取cookies
+from http import cookiejar
+from urllib import request
+
+filename = 'cookies.txt'
+cookie = cookiejar.LWPCookieJar(filename)
+handler = request.HTTPCookieProcessor(cookie)
+opener = request.build_opener(handler)
+response = opener.open('http://www.baidu.com')
+cookie.save(ignore_discard = True,ignore_expires=True)
+
+
+二：urllib.error
+urllib.error模块主要包含两个错误类，URLError类和HTTPError类。
+ URLError类来自urllib库的error模块，它继承自OSError类，是error异常模块的基类，由request模块生的异常都可以通过捕获这个类来处理。它具有一个属性reason，即返回错误的原因。
+URLError类来自urllib库的error模块，它继承自OSError类，是error异常模块的基类，由request模块生的异常都可以通过捕获这个类来处理。它具有一个属性reason，即返回错误的原因。
+HTTPError类是URLError的子类，专门用来处理HTTP请求错误，比如认证请求失败等，有3个属性：
+code：返回HTTP状态码，比如404表示网页不存在，500表示服务器内部错误等。
+reason：同父类一样，用于返回错误的原因。
+headers：返回请求头。
+因为URLError是HTTPError的父类，所以可以先选择捕获子类的错误，再去捕获父类的错误，所以上述代码更好的写法如下：
+from urllib import request, error
+try:
+    response = request.urlopen('http://www.douban.com/help.html',timeout=1)    
+    print('Request Successfully')
+except error.HTTPError as e:
+    print(e.reason, e.code, e.headers, sep='\n')
+except error.URLError as e:
+    print(e.reason)
+输出：from urllib import request, error try: response = request.urlopen('http://www.douban.com/help.html',timeout=1) print('Request Successfully') except error.HTTPError as e: print(e.reason, e.code, e.headers, sep='\n') except error.URLError as e: print(e.reason)
+x
+from urllib import request, error
+ 
+try:
+    response = request.urlopen('http://www.douban.com/help.html',timeout=1)    
+    print('Request Successfully')
+except error.HTTPError as e:
+    print(e.reason, e.code, e.headers, sep='\n')
+except error.URLError as e:
+    print(e.reason)
+Not Found
+404
+Date: Mon, 06 Aug 2018 07:29:35 GMT
+Content-Type: text/html
+Transfer-Encoding: chunked
+Connection: close
+Server: dae
+
+这样就可以做到先捕获HTTPError，获取它的错误状态码、原因、headers等信息。如果不是HTTPError异常，就会捕获URLError异常，输出错误原因。最后，用else来处理正常的逻辑。这是一个较好的异常处理写法。有时候，reason属性返回的不一定是字符串，也可能是一个对象
+
+三：urllib.parse
+urllib库提供了parse这个模块，它定义了处理URL的标准接口，例如实现URL各部分的抽取、合并以及链接转换。
+3.1.urljoin
+合成链接的一个方法，那就是urljoin()方法。我们可以提供一个base_url（基础链接）作为第一个参数，将新的链接作为第二个参数，该方法会分析base_url的scheme、netloc和path这3个内容并对新链接缺失的部分进行补充，最后返回结果。
+合成链接的一个方法，那就是urljoin()方法。我们可以提供一个base_url（基础链接）作为第一个参数，将新的链接作为第二个参数，该方法会分析base_url的scheme、netloc和path这3个内容并对新链接缺失的部分进行补充，最后返回结果。
+3.2.uurlencode()，它在构造GET请求参数的时候非常有用
+from urllib.parse import urlencode
+
+wd='机器学习'
+ 
+params = {
+    'wd': wd,
+    'q':'python'
+}
+base_url = 'http://www.baidu.com?'
+url = base_url + urlencode(params)
+print(url)
+http://www.baidu.com?wd=%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0&q=python
+3.3quote
+URL中带有中文参数时，有时可能会导致乱码的问题，此时用这个方法可以将中文字符转化为URL编码
+from urllib.parse import quote
+keyword = '人工智能'
+print(quote(keyword))
+url = 'https://www.baidu.com/s?wd=' + quote(keyword)
+print(url)
+输出：
+%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD
+https://www.baidu.com/s?wd=%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD
