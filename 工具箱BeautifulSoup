@@ -1,0 +1,69 @@
+Beautiful Soup提供一些简单的、Python式的函数来处理导航、搜索、修改分析树等功能。它是一个工具箱，通过解析文档为用户提供需要抓取的数据，因为简单，所以不需要多少代码就可以写出一个完整的应用程序。Beautiful Soup自动将输入文档转换为Unicode编码，输出文档转换为UTF-8编码。你不需要考虑编码方式，除非文档没有指定一个编码方式，这时你仅仅需要说明一下原始编码方式就可以了
+
+解析器
+解析器 使用方法 优势 劣势
+Python标准库 BeautifulSoup(markup, "html.parser") Python的内置标准库、执行速度适中、文档容错能力强 Python 2.7.3及Python 3.2.2之前的版本文档容错能力差
+lxml HTML解析器 BeautifulSoup(markup, "lxml") 速度快、文档容错能力强 需要安装C语言库
+lxml XML解析器 BeautifulSoup(markup, "xml") 速度快、唯一支持XML的解析器 需要安装C语言库
+html5lib BeautifulSoup(markup, "html5lib") 最好的容错性、以浏览器的方式解析文档、生成HTML5格式的文档 速度慢、不依赖外部扩展
+用法：
+soup = beautifulsoup(html,'html.parser')
+soup = beautifulsoup(html,'lxml')  xml  html5lib
+
+1.获取属性
+print(soup.p.attrs)
+print(soup.p.attrs['class'])
+{'class': ['title'], 'name': 'dromouse'}
+<class 'list'>
+
+还有更简单，直接在节点后面加中括号，传入属性名字就可以获取属性值
+获取内容：
+print(soup.p)
+print(soup.p.string)
+输出：
+<p class="title" name="dromouse"><b>The Dormouse's story</b></p>
+The Dormouse's story
+
+嵌套选择：
+<p class="title" name="dromouse"><b>The Dormouse's story</b></p>
+The Dormouse's story
+soup = BeautifulSoup(html,'html.parser')
+print(soup.p.b)
+输出：
+<b>The Dormouse's story</b>
+
+find 和find_all
+find 返回第一个符合的对象，find_all返回全部符合的对象
+唯一的区别是 find_all() 方法的返回结果是值包含一个元素的列表,而 find() 方法直接返回结果；find_all() 方法没有找到目标是返回空列表, find() 方法找不到目标时,返回 None
+for tag in soup.find_all(name='ul'):
+                   print(type(tag)) 
+            for tag1 in tag.find_all(name='li'):
+                                       print(tag1.string)
+
+css选择器基本用法
+使用CSS选择器时，只需要调用select()方法，传入相应的CSS选择器即可
+from bs4 import BeautifulSoup
+    <div class="panel-body">
+        <ul class="list" id="list-1">
+            <li class="element">Foo</li>
+            <li class="element">Bar</li>
+            <li class="element">Jay</li>
+        </ul>
+        <ul class="list list-small" id="list-2">
+            <li class="element">Foo</li>
+            <li class="element">Bar</li>
+        </ul>
+    </div>
+</div>
+
+soup = BeautifulSoup(html,'html.parser')
+text = soup.select('ul li.element')
+for fav in text:
+    print(fav.string)
+输出：
+Foo          （不带string输出可能会输出：<li class="element">Foo</li>）
+Bar           （带string输出会输出：Foo）
+Jay
+Foo
+Bar
+
