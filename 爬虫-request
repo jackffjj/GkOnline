@@ -1,0 +1,85 @@
+requests介绍：
+使用requests可以模拟浏览器请求 requests库发送请求将网页内容下载下来后，并不会执行js代码，需要我们自己分析目标站点然后发起新的request请求;      各种请求方式：常用requests.get()和requests.post()
+处理网页验证和Cookies时，需要写Opener和Handler来处理。为了更加方便地实现这些操作，就有了更为强大的库requests，有了它可以处理Cookies、登录验证、代理设置等
+1.
+requests.post()用法与requests.get()完全一致，特殊的是requests.post()有一个data参数，用来存放请求体数据
+import requests
+ 
+r = requests.get("https://github.com/favicon.ico")
+print(r.status_code)
+print(r.content)
+with open('favicon.ico', 'wb') as f:
+    f.write(r.content)
+提取照片
+
+2.我们知道requests可以模拟提交一些数据。假如有的网站需要上传文件，我们也可以用它来实现，这非常简单，示例如下：
+import requests
+ 
+files = {'file': open('cookies.txt', 'rb')}
+r = requests.post("http://httpbin.org/post", files=files)
+print(r.text)
+3.requests，获取和设置Cookies只需一步即可完成。
+import requests
+
+headers = {
+    'Cookie':'cna=llA7E8brPBoCAbcOHNi7hVAV; enc=ccE6LTKXBdwRHQ7N5jkpqIncgJ8ZidJyveRceAa64P6DhYJ6QMkyjWBtepCyjBNyG%2FmTUxsaCkoA3N0FfKOV%2Fw%3D%3D; _med=dw:1600&dh:900&pw:1600&ph:900&ist:0; cq=ccp%3D1; lid=%E4%B8%80%E6%98%9F%E4%BA%AE%E5%85%890513; otherx=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0; hng=CN%7Czh-CN%7CCNY%7C156; _m_h5_tk=daade659754ab2a3ebcce5a1819ebc83_1533525494428; _m_h5_tk_enc=aa370b8131678be8b3cd54fb685c44e2; sm4=440300; tk_trace=1; t=5fae17de501fc8266e8bf1c512a1ffed; tracknick=%5Cu4E00%5Cu661F%5Cu4EAE%5Cu51490513; _tb_token_=7e865437b395a; cookie2=122db2f7534e029808f0d166ce9e6682; res=scroll%3A1349*5491-client%3A1349*673-offset%3A1349*5491-screen%3A1366*768; pnm_cku822=098%23E1hvqpvUvbpvUvCkvvvvvjiPPsMO1jiWRFs9gjivPmP9tjtURLdhgj18RsLhljYRiQhvCvvvpZptvpvhvvCvpvGCvvpvvPMMmphvLv2%2FPFgaaXTAdXQaWXxrVTTJ%2B3%2BSafmAdBuKNB3r08g7%2BulApcc6%2Bu6XeB60D764d346NZsW0E9XHF%2BSBiVvVE01%2B2n79npaRfUTnZJivpvUvvCCEhkC4AuEvpvVvpCmpYFOKphv8vvvphvvvvvvvvCHhQvvvavvvhZLvvmCvvvvBBWvvUhvvvCHhQvv9pvCvpvVvUCvpvvv; isg=BPj4EYzn1zJgcDoendx8Qs7TyaZKyVpMLFzLRTJpVTPmTZg32nLQeztnAQXYGRTD',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+}
+r = requests.get("https://list.tmall.com/search_product.htm?q=%C3%C0%CA%B3",headers=headers)
+    
+
+# print(r.headers)#获取响应头的信息
+print(r.url)
+print(r.text)
+
+4不用每次设置cookies，那该怎么办呢？这时候就有了新的利器——Session对象。
+import requests
+ 
+s = requests.Session()    
+s.get('http://httpbin.org/cookies/set/number/123456789')
+r = s.get('http://httpbin.org/cookies')
+print(r.text)
+5.Requests 可以为 HTTPS 请求验证 SSL 证书，就像 web 浏览器一样。SSL 验证默认是开启的，如果证书验证失败，Requests 会抛出 SSLError:
+ 如何避免这个错误呢？很简单，把verify参数设置为False即可。
+import requests
+ 
+r = requests.get('https://www.12306.cn',verify=False)
+print(r.text)
+print(r.url)
+
+6.代理
+对于某些网站，在测试的时候请求几次，能正常获取内容。但是一旦开始大规模爬取，对于大规模且频繁的请求，网站可能会弹出验证码，或者跳转到登录认证页面，更甚者可能会直接封禁客户端的IP，导致一定时间段内无法访问。需要用到proxies参数。可以用这样的方式设置：（西刺找代理）
+import requests
+ 
+proxies={
+    'http':'http://121.31.150.169:8123'
+}
+ 
+r = requests.get('http://httpbin.org/get', proxies=proxies)
+print(r.text)
+7.超时
+这需要用到timeout参数。这个时间的计算是发出请求到服务器返回响应的时间。示例如下：
+import requests
+r = requests.get("https://www.taobao.com", timeout = 0.1)
+print(r.status_code)
+
+这一 timeout 值将会用作 connect 和 read 二者的 timeout。如果要分别制定，就传入一个元组：
+import requests
+r = requests.get("https://www.taobao.com", timeout =(1,1))
+print(r.status_code)
+
+如果远端服务器很慢，你可以让 Request 永远等待，传入一个 None 作为 timeout 值（timeout=None）
+
+异常
+import requests
+from requests.exceptions import Timeout,HTTPError,RequestException,ConnectionError
+
+try:
+    r = requests.get('https://www.youliang.com')
+    print(r.text)
+except Timeout:
+    print('TimeOut')
+except HTTPError:
+    print('Http Error')
+except RequestException:
+    print('Error')
